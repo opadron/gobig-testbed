@@ -1,0 +1,47 @@
+#! /usr/bin/env bash
+
+set -e
+
+sudo mkdir -p /shared
+sudo chown ubuntu:ubuntu /shared
+
+num_cpus="$( cat /proc/cpuinfo                |
+             egrep '^processor\s+\:\s+[0-9]+' |
+             wc -l )"
+
+cat /etc/hosts | grep internal | awk '{print $3}' > /shared/nodelist
+cat /shared/nodelist | grep -v "$( hostname )"    > /shared/slavelist
+
+for (( i=0; i<num_cpus; ++i )) ; do
+    cat /shared/nodelist
+done > /shared/hostsfile
+
+cp cluster-fork /shared
+
+/shared/cluster-fork /shared/nodelist sudo mkdir -p /shared
+/shared/cluster-fork /shared/nodelist sudo chown ubuntu:ubuntu /shared
+
+/shared/cluster-fork /shared/nodelist sudo -H apt-get -qyy install mpich2 \
+                                                                   python-pip
+
+/shared/cluster-fork /shared/nodelist sudo -H pip install -y cython          \
+                                                             httpagentparser \
+                                                             matplotlib      \
+                                                             mpi4py          \
+                                                             numpy           \
+                                                             pandas          \
+                                                             scikit-learn    \
+                                                             scipy
+
+/shared/cluster-fork /shared/slavelist sudo -H apt-get -qyy install nfs-common
+sudo -H apt-get -qyy install nfs-kernel-server
+
+echo '/shared  *(rw,sync,no_root_squash)' |
+    sudo tee -a /etc/exports > /dev/null
+
+nfs_line="$( hostname ):/shared /shared rsize=8192,wsize=8192,timec=14,intr"
+/shared/cluster-fork /shared/slavelist \
+    "echo \"$nfs_line\" | sudo tee -a /etc/fstab"
+
+/shared/cluster-fork /shared/slavelist sudo -H mount -a
+

@@ -1,0 +1,24 @@
+#! /usr/bin/env bash
+
+set -e
+
+declare -a colors
+colors[${#colors[@]}]="$( echo -e '\x1b[0;31m' )" # RED
+colors[${#colors[@]}]="$( echo -e '\x1b[0;32m' )" # GREEN
+colors[${#colors[@]}]="$( echo -e '\x1b[0;33m' )" # YELLOW
+colors[${#colors[@]}]="$( echo -e '\x1b[0;34m' )" # BLUE
+colors[${#colors[@]}]="$( echo -e '\x1b[0;36m' )" # CYAN
+reset="$( echo -e '\x1b[0m' )"
+
+host_list="$1" ; shift
+command="$*"
+
+counter=0
+cat "$host_list" | while read host ; do
+    color="${colors[$counter]}"
+    ssh "$host" "( $command ) | sed -e 's/^/$color$host$reset: /g'" &
+    counter="$(( (counter + 1) % ${#colors[@]} ))"
+done
+
+wait
+
