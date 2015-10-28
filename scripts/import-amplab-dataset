@@ -1,0 +1,18 @@
+#! /usr/bin/env bash
+
+set -e
+
+HADOOP="$( ls -1 /opt/hadoop/*/bin/hadoop | sort | tail -n 1 )"
+
+read -s -p "AWS key id: " key_id ; echo
+read -s -p "AWS secret access key: " secret_key ; echo
+
+S3_PREFIX="s3n://$key_id:$secret_key@big-data-benchmark/pavlo"
+HDFS_PREFIX="hdfs:///amplab"
+
+for size in tiny 1node 5nodes ; do
+    for format in sequence text ; do
+        "$HADOOP" distcp "$S3_PREFIX/$format/$size" "$HDFS_PREFIX/$format/$size"
+    done
+done
+
