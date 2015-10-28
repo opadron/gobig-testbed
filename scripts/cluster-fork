@@ -13,12 +13,17 @@ reset="$( echo -e '\x1b[0m' )"
 host_list="$1" ; shift
 command="$*"
 
-counter=0
-cat "$host_list" | while read host ; do
-    color="${colors[$counter]}"
-    ssh "$host" "( $command ) | sed -e 's/^/$color$host$reset: /g'" &
-    counter="$(( (counter + 1) % ${#colors[@]} ))"
-done
+deb_line="export DEBIAN_FRONTEND=noninteractive"
 
-wait
+counter=0
+cat "$host_list" | (
+    while read host ; do
+        color="${colors[$counter]}"
+        ssh "$host" \
+            "$deb_line ; ($command) 2>&1 | sed -e 's/^/$color$host$reset: /g'" &
+        counter="$(( (counter + 1) % ${#colors[@]} ))"
+    done
+
+    wait
+)
 

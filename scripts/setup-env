@@ -1,0 +1,56 @@
+#! /usr/bin/env bash
+
+set -e
+
+sudo mkdir -p /shared
+sudo chown ubuntu:ubuntu /shared
+
+num_cpus="$( cat /proc/cpuinfo                |
+             egrep '^processor\s+\:\s+[0-9]+' |
+             wc -l )"
+
+my_ip="$( hostname | sed -e 's/^ip\-//g' -e 's/\-/./g' )"
+cat /etc/hosts | grep internal | awk '{print $1}' > /shared/nodelist
+cat /shared/nodelist | grep -v "$my_ip"           > /shared/slavelist
+
+for (( i=0; i<num_cpus; ++i )) ; do
+    cat /shared/nodelist
+done > /shared/hostsfile
+
+cp "$( dirname "$0" )/cluster-fork" /shared
+
+/shared/cluster-fork /shared/nodelist sudo mkdir -p /shared
+/shared/cluster-fork /shared/nodelist sudo chown ubuntu:ubuntu /shared
+
+/shared/cluster-fork /shared/nodelist             \
+    sudo -H apt-get -qyy install mpich2           \
+                                 libatlas-dev     \
+                                 libfreetype6-dev \
+                                 libfftw3-dev     \
+                                 liblapack-dev    \
+                                 python-pip
+
+/shared/cluster-fork /shared/nodelist \
+    "yes | sudo -H pip install cython
+                              httpagentparser
+                              matplotlib
+                              mpi4py
+                              numpy
+                              pandas
+                              scikit-learn
+                              scipy"
+
+/shared/cluster-fork /shared/slavelist sudo -H apt-get -qyy install nfs-common
+sudo -H apt-get -qyy install nfs-kernel-server
+
+echo '/shared  *(rw,sync,no_root_squash,no_subtree_check)' |
+    sudo tee -a /etc/exports > /dev/null
+
+sudo service nfs-kernel-server restart
+
+nfs_line="$( hostname ):/shared /shared nfs rsize=8192,wsize=8192,timeo=14,intr"
+/shared/cluster-fork /shared/slavelist \
+    "echo \"$nfs_line\" | sudo tee -a /etc/fstab"
+
+/shared/cluster-fork /shared/slavelist sudo -H mount -a
+
