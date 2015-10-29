@@ -75,9 +75,9 @@ def main(args):
         # rankings
         # crawl
 
-        visitors_table_name = "%s_visitors" % size
-        rankings_table_name = "%s_rankings" % size
-        crawl_table_name    = "%s_crawl"    % size
+        visitors_table_name = "visitors_%s" % size
+        rankings_table_name = "rankings_%s" % size
+        crawl_table_name    = "crawl_%s"    % size
 
         if conf is None: conf = SparkConf()
         if sc is None: sc = SparkContext(conf=conf)
