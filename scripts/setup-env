@@ -38,7 +38,8 @@ cp "$( dirname "$0" )/cluster-fork" /shared
                               numpy           \\
                               pandas          \\
                               scikit-learn    \\
-                              scipy"
+                              scipy           \\
+                              snakebite"
 
 /shared/cluster-fork /shared/slavelist sudo -H apt-get -qyy install nfs-common
 sudo -H apt-get -qyy install nfs-kernel-server

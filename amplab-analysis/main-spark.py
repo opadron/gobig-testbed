@@ -144,6 +144,8 @@ def main(args):
         browser_results.to_pickle(path.join("results", size, "browser"))
         os_results.to_pickle(path.join("results", size, "os"))
 
+    return 0
+
 if __name__ == "__main__":
     from sys import exit
     exit(main(parse_args()))
