@@ -30,14 +30,14 @@ cp "$( dirname "$0" )/cluster-fork" /shared
                                  liblapack-dev    \
                                  python-pip
 
-/shared/cluster-fork /shared/nodelist \
-    "yes | sudo -H pip install cython
-                              httpagentparser
-                              matplotlib
-                              mpi4py
-                              numpy
-                              pandas
-                              scikit-learn
+/shared/cluster-fork /shared/nodelist          \
+    "yes | sudo -H pip install cython         \\
+                              httpagentparser \\
+                              matplotlib      \\
+                              mpi4py          \\
+                              numpy           \\
+                              pandas          \\
+                              scikit-learn    \\
                               scipy"
 
 /shared/cluster-fork /shared/slavelist sudo -H apt-get -qyy install nfs-common
