@@ -1,0 +1,46 @@
+---
+
+  - name: set ec2 pod specification
+    set_fact:
+        ec2_pod_spec:
+            key: gobig
+            rules:
+              - proto: all
+                from_port: all
+                to_port: all
+                group_name: ec2_pod_gobig-benchmark-3
+
+              - proto: tcp # ssh
+                from_port: 22
+                to_port: 22
+                cidr_ip: 0.0.0.0/0
+
+            name: gobig-benchmark-3
+
+            hosts:
+                computenode:
+                    name: cn-3
+                    count: 3
+                    type: m4.10xlarge
+                    groups:
+                      - masters
+                      - slaves
+                      - datanodes
+                      - zookeepers
+                      - spark
+                      - benchmark
+                    volumes:
+                        sdb: 50
+                        sdc: 1000
+
+                headnode:
+                    name: nn-3
+                    type: t2.medium
+                    groups:
+                      - namenodes
+                      - headnode
+                      - benchmark
+                    volumes:
+                        sdb: 10
+                        sdc: 50
+

@@ -1,0 +1,43 @@
+---
+
+  - hosts: all
+    vars:
+        hdfs_datanodes: datanodes
+        hdfs_namenodes: namenodes
+        mesos_masters: masters
+        mesos_slaves: slaves
+        spark: spark
+        zookeepers: zookeepers
+
+        datanode_set: "{{ groups.get(hdfs_datanodes, []) }}"
+        namenode_set: "{{ groups.get(hdfs_namenodes, []) }}"
+
+        master_set: "{{ groups.get(mesos_masters, []) }}"
+        slave_set: "{{ groups.get(mesos_slaves, []) }}"
+
+        mesos_set: "{{ master_set | union(slave_set) }}"
+        spark_set: "{{ groups.get(spark, []) | union(mesos_set) }}"
+
+        zookeeper_server_set: "{{ groups.get(zookeepers, []) | union(master_set) }}"
+        zookeeper_client_set: "{{ mesos_set }}"
+        zookeeper_set: "{{ zookeeper_server_set | union(zookeeper_client_set) }}"
+
+        hadoop_set: "{{ namenode_set | union(datanode_set) }}"
+
+    tasks:
+      - group_by: key={{ inventory_hostname in datanode_set   and "HD" or "x" }}
+      - group_by: key={{ inventory_hostname in namenode_set   and "HN" or "x" }}
+
+      - group_by: key={{ (inventory_hostname in hadoop_set or
+                          inventory_hostname in spark_set   ) and "HC" or "x" }}
+
+      - group_by: key={{ inventory_hostname in master_set     and "MM" or "x" }}
+      - group_by: key={{ inventory_hostname in slave_set      and "MS" or "x" }}
+
+      - group_by: key={{ inventory_hostname in mesos_set      and "MC" or "x" }}
+
+      - group_by: key={{ inventory_hostname in spark_set      and "SP" or "x" }}
+      - group_by: key={{ inventory_hostname in zookeeper_server_set and "ZS" or "x" }}
+      - group_by: key={{ inventory_hostname in zookeeper_client_set and "ZC" or "x" }}
+      - group_by: key={{ inventory_hostname in zookeeper_set  and "ZK" or "x" }}
+
