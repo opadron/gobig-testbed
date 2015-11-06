@@ -56,6 +56,9 @@ def parse_args():
     parser = ArgumentParser()
     parser.add_argument(
         "-s", "--sizes", nargs="+", default=[], help="dataset sizes to process")
+    parser.add_argument(
+        "-n", "--nodes", type=int, required=True,
+        help="number of nodes in the job")
 
     args = parser.parse_args()
     args.sizes = set(args.sizes)
@@ -135,14 +138,15 @@ def main(args):
         timings["q-stats-by-browser"] = toc()
         browser_results.index = browser_results.pop("browser")
 
-        mkdir_p(path.join("results", size))
-        with open(path.join("results", size, "timings"), "w") as f:
+        top_dir = path.join("results", size, "spark", str(args.nodes))
+        mkdir_p(top_dir)
+        with open(path.join(top_dir, "timings"), "w") as f:
             for entry in timings.items():
                 f.write("%s, %.18e\n" % entry)
             f.flush()
 
-        browser_results.to_pickle(path.join("results", size, "browser"))
-        os_results.to_pickle(path.join("results", size, "os"))
+        browser_results.to_pickle(path.join(top_dir, "browser"))
+        os_results.to_pickle(path.join(top_dir, "os"))
 
     return 0
 

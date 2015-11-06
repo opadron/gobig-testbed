@@ -68,6 +68,9 @@ def parse_args():
         parser.add_argument(
             "-s", "--sizes", nargs="+", default=[],
             help="dataset sizes to process")
+        parser.add_argument(
+            "-n", "--nodes", type=int, required=False,
+            help="number of nodes in the job")
 
         try:
             args = parser.parse_args()
@@ -75,6 +78,7 @@ def parse_args():
             MPI.COMM_WORLD.bcast(None, root=0)
             raise
         args.sizes = set(args.sizes)
+        args.nodes = args.nodes or c_size
 
     args = MPI.COMM_WORLD.bcast(args, root=0)
     return args
@@ -207,14 +211,15 @@ def main(args):
         if c_rank == 0: browser_results.index = browser_results.pop("browser")
 
         if c_rank == 0:
-            mkdir_p(path.join("results", size))
-            with open(path.join("results", size, "timings"), "w") as f:
+            top_dir = path.join("results", size, "mpi", str(args.nodes))
+            mkdir_p(top_dir)
+            with open(path.join(top_dir, "timings"), "w") as f:
                 for entry in timings.items():
                     f.write("%s, %.18e\n" % entry)
                 f.flush()
 
-            browser_results.to_pickle(path.join("results", size, "browser"))
-            os_results.to_pickle(path.join("results", size, "os"))
+            browser_results.to_pickle(path.join(top_dir, "browser"))
+            os_results.to_pickle(path.join(top_dir, "os"))
 
     return 0
 
