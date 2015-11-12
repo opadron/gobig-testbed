@@ -1,5 +1,5 @@
 {% for ansible_host in groups["benchmark"] -%}
-{% if not hostvars[ansible_host]["is_head_node"] -%}
+{% if not (hostvars[ansible_host]["is_head_node"]|bool) -%}
 {{ hostvars[ansible_host]["ansible_eth0"]["ipv4"]["address"] }}
 {% endif -%}
 {% endfor -%}

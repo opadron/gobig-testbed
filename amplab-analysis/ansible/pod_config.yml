@@ -38,6 +38,8 @@
                     type: t2.medium
                     groups:
                       - namenodes
+                      - clients
+                      - spark
                       - headnode
                       - benchmark
                     volumes:

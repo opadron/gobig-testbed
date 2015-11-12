@@ -6,6 +6,7 @@
         hdfs_namenodes: namenodes
         mesos_masters: masters
         mesos_slaves: slaves
+        mesos_clients: clients
         spark: spark
         zookeepers: zookeepers
 
@@ -14,8 +15,10 @@
 
         master_set: "{{ groups.get(mesos_masters, []) }}"
         slave_set: "{{ groups.get(mesos_slaves, []) }}"
+        client_set: "{{ groups.get(mesos_clients, []) }}"
 
-        mesos_set: "{{ master_set | union(slave_set) }}"
+        mesos_server_set: "{{ master_set | union(slave_set) }}"
+        mesos_set: "{{ mesos_server_set | union(client_set) }}"
         spark_set: "{{ groups.get(spark, []) | union(mesos_set) }}"
 
         zookeeper_server_set: "{{ groups.get(zookeepers, []) | union(master_set) }}"

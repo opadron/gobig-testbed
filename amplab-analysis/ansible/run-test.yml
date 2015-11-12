@@ -108,14 +108,20 @@
         command: mount -a
         when: not (is_head_node|bool)
 
+      - name: benchmark | amplab data | check
+        shell: /opt/hadoop/*/bin/hadoop fs -ls /amplab &> /dev/null
+        ignore_errors: yes
+        register: amplab_data_check
+        when: is_head_node|bool
+
       - name: benchmark | amplab data | import
         shell: "( echo '{{ AWS_KEY_ID }}' ;            \
                   echo '{{ AWS_SECRET_KEY }}' ) | bash \
                   /shared/gobig-testbed/scripts/import-amplab-dataset"
-        when: is_head_node|bool
+        when: (is_head_node|bool) and (amplab_data_check.stdout == "")
 
       - name: benchmark | amplab data | spark
-        shell: "( source ../scripts/setup-spark.bash ; \
+        shell: "( source ../include/setup-spark.bash ; \
                   python main-spark.py -s tiny 1node 5nodes -n 3 )"
         args:
             executable: /bin/bash
@@ -125,8 +131,8 @@
 
       - name: benchmark | amplab data | mpi
         shell: "( cd /shared/gobig-testbed/amplab-analysis ; \
-                  source ../scripts/setup-mpi.bash ;         \
-                  source ../scripts/setup-spark.bash ;       \
+                  source ../include/setup-mpi.bash ;         \
+                  source ../include/setup-spark.bash ;       \
                   mpirun -n 3 -f /shared/hostsfile           \
                     python main-mpi.py -s tiny 1node 5nodes )"
         args:
