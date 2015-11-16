@@ -154,6 +154,6 @@
         local_action: "shell mkdir -p /home/opadron/gobig-benchmark-results ; \
                              scp -o StrictHostKeyChecking=no                  \
                                  -o UserKnownHostsFile=/dev/null              \
-                                 -i ~/.ssh/ec2                                \
+                                 -i ~/.ssh/gobig                              \
                                     ubuntu@{{ inventory_hostname }}:/shared/gobig-testbed/amplab-analysis/results/* /home/opadron/gobig-benchmark-results"
 
