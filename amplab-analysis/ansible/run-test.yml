@@ -25,6 +25,7 @@
         when: is_head_node|bool
 
       - name: benchmark | repo | clone
+        become: false
         git:
             repo: git://github.com/opadron/gobig-testbed.git
             dest: /shared/gobig-testbed
@@ -33,6 +34,7 @@
         when: is_head_node|bool
 
       - name: benchmark | hostsfile | generate
+        become: false
         template:
             src: hostsfile.j2
             dest: /shared/hostsfile
@@ -109,18 +111,21 @@
         when: not (is_head_node|bool)
 
       - name: benchmark | amplab data | check
+        become: false
         shell: /opt/hadoop/*/bin/hadoop fs -ls /amplab &> /dev/null
         ignore_errors: yes
         register: amplab_data_check
         when: is_head_node|bool
 
       - name: benchmark | amplab data | import
+        become: false
         shell: "( echo '{{ AWS_KEY_ID }}' ;            \
                   echo '{{ AWS_SECRET_KEY }}' ) | bash \
                   /shared/gobig-testbed/scripts/import-amplab-dataset"
         when: (is_head_node|bool) and (amplab_data_check.stdout == "")
 
       - name: benchmark | amplab data | spark
+        become: false
         shell: "( source ../include/setup-spark.bash ; \
                   python main-spark.py -s tiny 1node 5nodes -n 3 )"
         args:
@@ -130,6 +135,7 @@
         when: is_head_node|bool
 
       - name: benchmark | amplab data | mpi
+        become: false
         shell: "( cd /shared/gobig-testbed/amplab-analysis ; \
                   source ../include/setup-mpi.bash ;         \
                   source ../include/setup-spark.bash ;       \
