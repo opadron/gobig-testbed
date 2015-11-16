@@ -112,7 +112,7 @@
 
       - name: benchmark | amplab data | check
         become: false
-        shell: /opt/hadoop/*/bin/hadoop fs -ls /amplab &> /dev/null
+        shell: /opt/hadoop/*/bin/hadoop fs -ls /amplab 2> /dev/null
         ignore_errors: yes
         register: amplab_data_check
         when: is_head_node|bool
