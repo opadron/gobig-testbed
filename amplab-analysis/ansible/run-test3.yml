@@ -1,6 +1,6 @@
 ---
 
-  - include: site.yml
+  - include: site3.yml
 
   - hosts: benchmark
     pre_tasks:
