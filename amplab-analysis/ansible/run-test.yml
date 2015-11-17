@@ -155,5 +155,5 @@
                              scp -o StrictHostKeyChecking=no                  \
                                  -o UserKnownHostsFile=/dev/null              \
                                  -i ~/.ssh/gobig                              \
-                                    ubuntu@{{ inventory_hostname }}:/shared/gobig-testbed/amplab-analysis/results/* /home/opadron/gobig-benchmark-results"
+                                 -r ubuntu@{{ inventory_hostname }}:/shared/gobig-testbed/amplab-analysis/results/* /home/opadron/gobig-benchmark-results"
 
