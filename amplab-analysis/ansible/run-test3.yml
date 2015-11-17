@@ -80,8 +80,7 @@
       - name: benchmark | nfs export | add
         lineinfile:
             dest: /etc/exports
-            regexp: >
-                ^/shared
+            regexp: "/shared"
             line: "/shared  *(rw,sync,no_root_squash,no_subtree_check)"
             state: present
         when: is_head_node|bool
@@ -92,23 +91,18 @@
             state: restarted
         when: is_head_node|bool
 
-      - name: benchmark | nfs export | register
-        lineinfile:
-            dest: /etc/fstab
-            regexp: >
-                ^[^:]+:/shared /shared nfs
-            line: >
+      - name: benchmark | nfs export | mount
+        mount:
+            src: >
                 {{ hostvars[groups["headnode"][0]]
                                   ["ansible_eth0"]
                                   ["ipv4"]
                                   ["address"]
-                }}:/shared /shared nfs rsize=8192,wsize=8192,timeo=14,intr
-            state: present
-        when: not (is_head_node|bool)
-
-      - name: benchmark | nfs export | mount
-        command: mount -a
-        when: not (is_head_node|bool)
+                }}:/shared
+            name: /shared
+            fstype: nfs
+            opts: "rsize=8192,wsize=8192,timeo=14,intr"
+            state: mounted
 
       - name: benchmark | amplab data | check
         become: false
@@ -156,4 +150,6 @@
                                  -o UserKnownHostsFile=/dev/null              \
                                  -i ~/.ssh/gobig                              \
                                  -r ubuntu@{{ inventory_hostname }}:/shared/gobig-testbed/amplab-analysis/results/* /home/opadron/gobig-benchmark-results"
+
+  - include: stop3.yml
 
