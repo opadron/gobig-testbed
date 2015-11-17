@@ -1,6 +1,6 @@
 ---
 
-  - include: instantiate.yml
+  - include: instantiate3.yml
   - include: assign-groups.yml
 
   - hosts: MC

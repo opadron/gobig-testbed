@@ -1,6 +1,6 @@
 ---
 
-  - include: instantiate.yml
+  - include: instantiate3.yml
   - include: assign-groups.yml
 
   - hosts: HC
@@ -21,51 +21,48 @@
         mesos_master_ansible_group: MM
         zookeeper_ansible_group: ZS
         state: present
-
-  - hosts: benchmark
-    roles:
       - role: ssh-known-hosts
-        ssh_known_hosts_ansible_group: benchmark
+        ssh_known_hosts_ansible_group: MC
       - role: user-generate
         name: ubuntu
       - role: ssh-key-exchange
         user: ubuntu
-        ssh_key_exchange_ansible_group: benchmark
+        ssh_key_exchange_ansible_group: MC
       - role: hosts-file
-        hosts_file_ansible_group: benchmark
-        hosts_file_clear_ansible_group: benchmark
+        hosts_file_ansible_group: MC
+        hosts_file_clear_ansible_group: MC
 
   - hosts: HN
     roles:
       - role: hadoop-hdfs-namenode
         hdfs_namenode_ansible_group: HN
-        state: started
+        state: restarted
 
   - hosts: HD
     roles:
       - role: hadoop-hdfs-datanode
         hdfs_namenode_ansible_group: HN
-        state: started
+        state: restarted
 
   - hosts: ZS
     roles:
       - role: zookeeper
         zookeeper_ansible_group: ZS
-        state: started
+        state: restarted
 
   - hosts: MM
     roles:
       - role: mesos-master
         zookeeper_ansible_group: ZS
         mesos_master_ansible_group: MM
-        state: started
+        state: restarted
 
   - hosts: MS
     roles:
       - role: mesos-slave
         zookeeper_ansible_group: ZS
         mesos_master_ansible_group: MM
-        state: started
+        state: restarted
 
   - hosts: SP
     roles:
@@ -73,5 +70,5 @@
         hdfs_namenode_ansible_group: HN
         zookeeper_ansible_group: ZS
         mesos_master_ansible_group: MM
-        state: started
+        state: restarted
 
