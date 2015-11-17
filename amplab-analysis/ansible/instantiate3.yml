@@ -12,7 +12,7 @@
         name: "{{ ec2_pod_spec.name }}"
         rules: "{{ ec2_pod_spec.rules }}"
         hosts: "{{ ec2_pod_spec.hosts }}"
-        state: restarted
+        state: running
 
   - hosts: benchmark
     tasks:
