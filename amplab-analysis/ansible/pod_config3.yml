@@ -21,7 +21,7 @@
                 computenode:
                     name: cn-3
                     count: 3
-                    type: m4.10xlarge
+                    type: m4.4xlarge
                     groups:
                       - masters
                       - slaves

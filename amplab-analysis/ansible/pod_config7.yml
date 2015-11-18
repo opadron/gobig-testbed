@@ -21,7 +21,7 @@
                 computenode:
                     name: cn-7
                     count: 3
-                    type: m4.10xlarge
+                    type: m4.4xlarge
                     groups:
                       - masters
                       - slaves
@@ -36,7 +36,7 @@
                 computenode-slaves-only:
                     name: cn-7
                     count: 4
-                    type: m4.10xlarge
+                    type: m4.4xlarge
                     groups:
                       - slaves
                       - datanodes
