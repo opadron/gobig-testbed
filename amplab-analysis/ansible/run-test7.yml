@@ -1,0 +1,166 @@
+---
+
+  - include: stop7.yml
+  - include: site7.yml
+
+  - hosts: benchmark
+    pre_tasks:
+      - include: aws-credentials.yml
+    tasks:
+      - name: benchmark | headnode mask | set
+        set_fact:
+            is_head_node: >
+                {{ inventory_hostname == groups["headnode"][0] }}
+
+      - name: benchmark | shared space | create
+        file:
+            path: /shared
+            state: directory
+            owner: ubuntu
+            group: ubuntu
+
+      - name: benchmark | git | install
+        apt:
+            name: git
+            state: present
+        when: is_head_node|bool
+
+      - name: benchmark | repo | clone
+        become: false
+        git:
+            repo: git://github.com/opadron/gobig-testbed.git
+            dest: /shared/gobig-testbed
+            version: master
+            accept_hostkey: true
+        when: is_head_node|bool
+
+      - name: benchmark | hostsfile | generate
+        become: false
+        template:
+            src: hostsfile.j2
+            dest: /shared/hostsfile
+            mode: 0644
+        when: is_head_node|bool
+
+      - name: benchmark | packages | apt
+        apt:
+            name: "{{ item }}"
+            state: present
+        with_items:
+          - mpich2
+          - libatlas-dev
+          - libfreetype6-dev
+          - libfftw3-dev
+          - liblapack-dev
+          - pkg-config
+          - python-dev
+          - python-pip
+          - nfs-common
+
+      - name: benchmark | packages | pip
+        pip:
+            name: "{{ item }}"
+            state: present
+        with_items:
+          - cython
+          - httpagentparser
+          - matplotlib
+          - mpi4py
+          - numpy
+          - pandas
+          - scipy
+          - scikit-learn
+          - snakebite
+
+      - name: benchmark | nfs server | install
+        apt:
+            name: nfs-kernel-server
+            state: present
+        when: is_head_node|bool
+
+      - name: benchmark | nfs export | add
+        lineinfile:
+            dest: /etc/exports
+            regexp: "/shared"
+            line: "/shared  *(rw,sync,no_root_squash,no_subtree_check)"
+            state: present
+        when: is_head_node|bool
+
+      - name: benchmark | nfs server | restart
+        service:
+            name: nfs-kernel-server
+            state: restarted
+        when: is_head_node|bool
+
+      - name: benchmark | nfs server | wait
+        wait_for:
+            host: "{{ inventory_hostname }}"
+            port: "{{ item }}"
+            timeout: 60
+        with_items:
+            - 111
+            - 2049
+        when: is_head_node|bool
+
+      - name: benchmark | nfs export | mount
+        mount:
+            src: >
+                {{ hostvars[groups["headnode"][0]]
+                                  ["ansible_eth0"]
+                                  ["ipv4"]
+                                  ["address"]
+                }}:/shared
+            name: /shared
+            fstype: nfs
+            opts: "rsize=8192,wsize=8192,timeo=14,intr"
+            state: mounted
+
+      - name: benchmark | amplab data | check
+        become: false
+        shell: /opt/hadoop/*/bin/hadoop fs -ls /amplab 2> /dev/null
+        ignore_errors: yes
+        register: amplab_data_check
+        when: is_head_node|bool
+
+      - name: benchmark | amplab data | import
+        become: false
+        shell: "( echo '{{ AWS_KEY_ID }}' ;            \
+                  echo '{{ AWS_SECRET_KEY }}' ) | bash \
+                  /shared/gobig-testbed/scripts/import-amplab-dataset"
+        when: (is_head_node|bool) and (amplab_data_check.stdout == "")
+
+      - name: benchmark | amplab data | spark
+        become: false
+        shell: "( source ../include/setup-spark.bash ; \
+                  python main-spark.py -s tiny 1node 5nodes -n 7 )"
+        args:
+            executable: /bin/bash
+            chdir: /shared/gobig-testbed/amplab-analysis
+            creates: results/5nodes/spark
+        when: is_head_node|bool
+
+      - name: benchmark | amplab data | mpi
+        become: false
+        shell: "( cd /shared/gobig-testbed/amplab-analysis ; \
+                  source ../include/setup-mpi.bash ;         \
+                  source ../include/setup-spark.bash ;       \
+                  mpirun -n 7 -f /shared/hostsfile           \
+                    python main-mpi.py -s tiny 1node 5nodes )"
+        args:
+            executable: /bin/bash
+            chdir: /shared/gobig-testbed/amplab-analysis
+            creates: results/5nodes/mpi
+        when: is_head_node|bool
+
+  - hosts: headnode
+    become: false
+    tasks:
+      - name: benchmark | results | fetch
+        local_action: "shell mkdir -p /home/opadron/gobig-benchmark-results ; \
+                             scp -o StrictHostKeyChecking=no                  \
+                                 -o UserKnownHostsFile=/dev/null              \
+                                 -i ~/.ssh/gobig                              \
+                                 -r ubuntu@{{ inventory_hostname }}:/shared/gobig-testbed/amplab-analysis/results/* /home/opadron/gobig-benchmark-results"
+
+  - include: stop7.yml
+
