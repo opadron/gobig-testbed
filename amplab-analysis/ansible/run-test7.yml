@@ -23,7 +23,6 @@
         apt:
             name: git
             state: present
-        when: is_head_node|bool
 
       - name: benchmark | repo | clone
         become: false
@@ -32,7 +31,6 @@
             dest: /shared/gobig-testbed
             version: master
             accept_hostkey: true
-        when: is_head_node|bool
 
       - name: benchmark | hostsfile | generate
         become: false
@@ -55,7 +53,6 @@
           - pkg-config
           - python-dev
           - python-pip
-          - nfs-common
 
       - name: benchmark | packages | pip
         pip:
@@ -72,60 +69,13 @@
           - scikit-learn
           - snakebite
 
-      - name: benchmark | nfs server | install
-        apt:
-            name: nfs-kernel-server
-            state: present
-        when: is_head_node|bool
-
-      - name: benchmark | nfs export | add
-        lineinfile:
-            dest: /etc/exports
-            regexp: "/shared"
-            line: "/shared  *(rw,sync,no_root_squash,no_subtree_check)"
-            state: present
-        when: is_head_node|bool
-
-      - name: benchmark | nfs server | restart
-        service:
-            name: nfs-kernel-server
-            state: restarted
-        when: is_head_node|bool
-
-      - name: benchmark | nfs server | wait
-        wait_for:
-            host: "{{ inventory_hostname }}"
-            port: 2049
-            timeout: 120
-            delay: 60
-        when: is_head_node|bool
-
-      - name: benchmark | nfs export | mount
-        mount:
-            src: >
-                {{ hostvars[groups["headnode"][0]]
-                                  ["ansible_eth0"]
-                                  ["ipv4"]
-                                  ["address"]
-                }}:/shared
-            name: /shared
-            fstype: nfs
-            opts: "rsize=8192,wsize=8192,timeo=14,intr"
-            state: mounted
-
-      - name: benchmark | amplab data | check
-        become: false
-        shell: /opt/hadoop/*/bin/hadoop fs -ls /amplab 2> /dev/null
-        ignore_errors: yes
-        register: amplab_data_check
-        when: is_head_node|bool
-
       - name: benchmark | amplab data | import
         become: false
         shell: "( echo '{{ AWS_KEY_ID }}' ;            \
                   echo '{{ AWS_SECRET_KEY }}' ) | bash \
-                  /shared/gobig-testbed/scripts/import-amplab-dataset"
-        when: (is_head_node|bool) and (amplab_data_check.stdout == "")
+                  /shared/gobig-testbed/scripts/import-amplab-dataset \
+                      tiny 1node 5nodes"
+        when: is_head_node|bool
 
       - name: benchmark | amplab data | spark
         become: false
