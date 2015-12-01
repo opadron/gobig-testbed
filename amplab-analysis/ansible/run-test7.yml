@@ -95,11 +95,9 @@
       - name: benchmark | nfs server | wait
         wait_for:
             host: "{{ inventory_hostname }}"
-            port: "{{ item }}"
+            port: 2049
             timeout: 60
-        with_items:
-            - 111
-            - 2049
+            delay: 60
         when: is_head_node|bool
 
       - name: benchmark | nfs export | mount
