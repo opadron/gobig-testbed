@@ -96,7 +96,7 @@
         wait_for:
             host: "{{ inventory_hostname }}"
             port: 2049
-            timeout: 60
+            timeout: 120
             delay: 60
         when: is_head_node|bool
 
