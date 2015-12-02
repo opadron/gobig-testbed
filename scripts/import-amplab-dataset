@@ -36,12 +36,15 @@ for size in tiny 1node 5nodes ; do
 
     for format in sequence text ; do
 
-        if ( "$HADOOP" fs -ls "$HDFS_PREFIX/$format/$size" 2> /dev/null )
+        hdfs_data_path="$HDFS_PREFIX/$format/$size/uservisits"
+        s3_data_path="$S3_PREFIX/$format/$size/uservisits"
+
+        if ( "$HADOOP" fs -ls "$hdfs_data_path" 2> /dev/null )
         then
             continue
         fi
 
-        "$HADOOP" distcp "$S3_PREFIX/$format/$size" "$HDFS_PREFIX/$format/$size"
+        "$HADOOP" distcp "$s3_data_path" "$hdfs_data_path"
     done
 done
 
